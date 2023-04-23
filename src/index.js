@@ -16,7 +16,7 @@ let gallery = new SimpleLightbox('.gallery a');
 let fetchCounter = 1;
 let saveInput = '';
 
-API_KEY = '35683515-755808cb63fe444becf5469f8';
+const API_KEY = '35683515-755808cb63fe444becf5469f8';
 
 axios.defaults.baseURL = 'https://pixabay.com/api/';
 
