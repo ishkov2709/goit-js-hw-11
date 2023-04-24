@@ -1,10 +1,12 @@
 import { search } from './fetchImages';
 import axios from 'axios';
-import Notiflix from 'notiflix';
+import Notiflix, { Loading } from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import InfiniteScroll from 'infinite-scroll';
+import OnlyScroll from 'only-scrollbar';
 
-// Variebles
+// Variables
 
 const refs = {
   searchImgForm: document.querySelector('.search-form'),
@@ -13,14 +15,28 @@ const refs = {
   btnLoad: document.querySelector('.load-more'),
 };
 
-let gallery = new SimpleLightbox('.gallery a');
-
 let fetchCounter = 1;
 let saveInput = '';
 
 const API_KEY = '35683515-755808cb63fe444becf5469f8';
 
+// Custom Libraries
+
 axios.defaults.baseURL = 'https://pixabay.com/api/';
+
+let gallery = new SimpleLightbox('.gallery a');
+
+const scroll = new OnlyScroll(document.scrollingElement);
+
+let infScroll = new InfiniteScroll(refs.galleryBox, {
+  path: function () {
+    fetchCounter += 1;
+    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${fetchCounter}`;
+  },
+  responseBody: 'json',
+  status: '.scroll-status',
+  history: false,
+});
 
 // Funtions
 
@@ -33,34 +49,19 @@ const onSubmitRenderGalleryHandler = async evt => {
     .trim();
   if (!input || saveInput === input) return;
   checkResultInput(input);
-  hideBtnLoad();
   try {
-    const response = await search(API_KEY, saveInput, fetchCounter);
+    const response = await search(API_KEY, saveInput, infScroll.pageIndex);
     const result = await checkOnInputResponse(response);
-    return renderMarkup(refs.galleryBox, result);
+    return renderMarkup(result);
   } catch {
     onRejectBtnSearch();
   }
 };
 
-const onBtnClickRenderGalleryHandler = async evt => {
-  evt.preventDefault();
-  hideBtnLoad();
-  fetchCounter += 1;
-  try {
-    const response = await search(API_KEY, saveInput, fetchCounter);
-    const result = await checkOnInputResponse(response);
-    await renderMarkup(refs.galleryBox, result);
-    return scrollPage();
-  } catch (error) {
-    onRejectBtnClick(error);
-  }
-};
-
 // Render Foo
 
-const renderMarkup = (renderBox, response) => {
-  const markup = response
+const renderMarkup = response => {
+  const markup = response.hits
     .map(
       ({
         webformatURL,
@@ -71,7 +72,7 @@ const renderMarkup = (renderBox, response) => {
         comments,
         downloads,
       }) => `
-        <div class="photo-card">
+        <article class="photo-card post">
             <a href="${largeImageURL}">
                 <img src="${webformatURL}" alt="${tags}" loading="lazy" />
             </a>
@@ -93,12 +94,12 @@ const renderMarkup = (renderBox, response) => {
                     ${downloads}
                 </p>
             </div>
-        </div>
+        </article>
       `
     )
     .join('');
 
-  renderBox.insertAdjacentHTML('beforeend', markup);
+  refs.galleryBox.insertAdjacentHTML('beforeend', markup);
   gallery.refresh();
 };
 
@@ -117,21 +118,10 @@ const checkOnInputResponse = response => {
   if (fetchCounter === 1) {
     Notiflix.Notify.success(`Hooray! We found ${response.totalHits} images.`);
   }
-  showBtnLoad();
-  return response.hits;
+  return response;
 };
 
 // Utils Foo
-
-const showBtnLoad = () => {
-  refs.btnLoad.classList.add('active');
-  refs.btnLoad.addEventListener('click', onBtnClickRenderGalleryHandler);
-};
-
-const hideBtnLoad = () => {
-  refs.btnLoad.classList.remove('active');
-  refs.btnLoad.removeEventListener('click', onBtnClickRenderGalleryHandler);
-};
 
 const onRejectBtnSearch = () => {
   Notiflix.Notify.failure(
@@ -139,26 +129,28 @@ const onRejectBtnSearch = () => {
   );
 };
 
-const onRejectBtnClick = error => {
-  if (error.response.status === 400) {
-    return Notiflix.Notify.info(
-      `We're sorry, but you've reached the end of search results.`
-    );
-  }
+const onRejectScroll = () => {
+  return Notiflix.Notify.info(
+    `We're sorry, but you've reached the end of search results.`
+  );
 };
 
-const scrollPage = () => {
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
-  console.log(cardHeight);
+// Fixed Foo
 
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
+const fixJumpContainer = evt => {
+  const lightbox = document.querySelector('.simple-lightbox');
+  if (lightbox === evt.target) {
+    return scroll.unlock();
+  }
+  if (lightbox) {
+    return scroll.lock();
+  }
 };
 
 // Listeners
 
-refs.searchImgForm.addEventListener('click', onSubmitRenderGalleryHandler);
+refs.searchImgForm.addEventListener('submit', onSubmitRenderGalleryHandler);
+window.addEventListener('click', fixJumpContainer);
+
+infScroll.on('load', renderMarkup);
+infScroll.on('error', onRejectScroll);

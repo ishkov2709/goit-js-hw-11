@@ -43,26 +43,3 @@ img {
     margin-bottom: 8px;
 }
 
-.load-more {
-    width: 105px;
-    display: block;
-    margin: 0 auto;
-    padding: 8px 10px;
-    background-color: #6d50ec;
-    color: #fff;
-    font-size: 14px;
-    border: none;
-    border-radius: 4px;
-    transition: background-color 250ms cubic-bezier(0.165, 0.84, 0.44, 1);
-    cursor: pointer;
-    visibility: hidden;
-}
-
-.load-more:hover {
-    background-color: #4123c5
-}
-
-.load-more.active {
-    visibility: visible;
-}
-

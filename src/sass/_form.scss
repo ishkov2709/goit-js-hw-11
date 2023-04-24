@@ -1,13 +1,20 @@
-.search-form {
-    display: flex;
-    justify-content: center;
+header {
     padding: 10px 0;
     background-color: #6d50ec;
+    text-align: center;
+}
+
+.search-form {
+    position: relative;
+    display: inline-flex;
+    
+
 }
 
 .search-form input {
-    width: 220px;
-    padding: 5px;
+    width: 260px;
+    height: 24px;
+    padding: 0 30px 0 5px;
     font-size: 16px;
     line-height: 1.2;
     letter-spacing: 0.25;
@@ -21,7 +28,14 @@
 }
 
 .search-form button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
+    height: inherit;
+    border: none;
+    background-color: transparent;
 }
