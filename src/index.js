@@ -139,7 +139,7 @@ const onRejectScroll = () => {
 
 const fixJumpContainer = evt => {
   const lightbox = document.querySelector('.simple-lightbox');
-  if (lightbox === evt.target) {
+  if (evt.target.classList.contains('simple-lightbox')) {
     return scroll.unlock();
   }
   if (lightbox) {
