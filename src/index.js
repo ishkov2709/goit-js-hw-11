@@ -50,7 +50,7 @@ const onSubmitRenderGalleryHandler = async evt => {
   if (!input || saveInput === input) return;
   checkResultInput(input);
   try {
-    const response = await search(API_KEY, saveInput, infScroll.pageIndex);
+    const response = await search(API_KEY, saveInput, fetchCounter);
     const result = await checkOnInputResponse(response);
     return renderMarkup(result);
   } catch {
