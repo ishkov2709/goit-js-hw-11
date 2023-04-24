@@ -24,6 +24,8 @@ axios.defaults.baseURL = 'https://pixabay.com/api/';
 
 // Funtions
 
+// Events Foo
+
 const onSubmitRenderGalleryHandler = async evt => {
   evt.preventDefault();
   const input = evt.currentTarget.elements.searchQuery.value
@@ -41,32 +43,21 @@ const onSubmitRenderGalleryHandler = async evt => {
   }
 };
 
-const checkResultInput = evt => {
-  if (saveInput !== evt) {
-    saveInput = evt;
-    fetchCounter = 1;
-    refs.galleryBox.innerHTML = '';
+const onBtnClickRenderGalleryHandler = async evt => {
+  evt.preventDefault();
+  hideBtnLoad();
+  fetchCounter += 1;
+  try {
+    const response = await search(API_KEY, saveInput, fetchCounter);
+    const result = await checkOnInputResponse(response);
+    await renderMarkup(refs.galleryBox, result);
+    return scrollPage();
+  } catch (error) {
+    onRejectBtnClick(error);
   }
 };
 
-const showBtnLoad = () => {
-  refs.btnLoad.classList.add('active');
-  refs.btnLoad.addEventListener('click', onBtnClickRenderGalleryHandler);
-};
-
-const hideBtnLoad = () => {
-  refs.btnLoad.classList.remove('active');
-  refs.btnLoad.removeEventListener('click', onBtnClickRenderGalleryHandler);
-};
-
-const checkOnInputResponse = response => {
-  if (!response.totalHits) return;
-  if (fetchCounter === 1) {
-    Notiflix.Notify.success(`Hooray! We found ${response.totalHits} images.`);
-  }
-  showBtnLoad();
-  return response.hits;
-};
+// Render Foo
 
 const renderMarkup = (renderBox, response) => {
   const markup = response
@@ -111,6 +102,51 @@ const renderMarkup = (renderBox, response) => {
   gallery.refresh();
 };
 
+// Check Foo
+
+const checkResultInput = evt => {
+  if (saveInput !== evt) {
+    saveInput = evt;
+    fetchCounter = 1;
+    refs.galleryBox.innerHTML = '';
+  }
+};
+
+const checkOnInputResponse = response => {
+  if (!response.totalHits) return;
+  if (fetchCounter === 1) {
+    Notiflix.Notify.success(`Hooray! We found ${response.totalHits} images.`);
+  }
+  showBtnLoad();
+  return response.hits;
+};
+
+// Utils Foo
+
+const showBtnLoad = () => {
+  refs.btnLoad.classList.add('active');
+  refs.btnLoad.addEventListener('click', onBtnClickRenderGalleryHandler);
+};
+
+const hideBtnLoad = () => {
+  refs.btnLoad.classList.remove('active');
+  refs.btnLoad.removeEventListener('click', onBtnClickRenderGalleryHandler);
+};
+
+const onRejectBtnSearch = () => {
+  Notiflix.Notify.failure(
+    'Sorry, there are no images matching your search query. Please try again.'
+  );
+};
+
+const onRejectBtnClick = error => {
+  if (error.response.status === 400) {
+    return Notiflix.Notify.info(
+      `We're sorry, but you've reached the end of search results.`
+    );
+  }
+};
+
 const scrollPage = () => {
   const { height: cardHeight } = document
     .querySelector('.gallery')
@@ -121,34 +157,6 @@ const scrollPage = () => {
     top: cardHeight * 2,
     behavior: 'smooth',
   });
-};
-
-const onRejectBtnSearch = () => {
-  Notiflix.Notify.failure(
-    'Sorry, there are no images matching your search query. Please try again.'
-  );
-};
-
-const onBtnClickRenderGalleryHandler = async evt => {
-  evt.preventDefault();
-  hideBtnLoad();
-  fetchCounter += 1;
-  try {
-    const response = await search(API_KEY, saveInput, fetchCounter);
-    const result = await checkOnInputResponse(response);
-    await renderMarkup(refs.galleryBox, result);
-    return scrollPage();
-  } catch (error) {
-    onRejectBtnClick(error);
-  }
-};
-
-const onRejectBtnClick = error => {
-  if (error.response.status === 400) {
-    return Notiflix.Notify.info(
-      `We're sorry, but you've reached the end of search results.`
-    );
-  }
 };
 
 // Listeners
