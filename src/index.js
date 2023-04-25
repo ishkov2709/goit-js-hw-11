@@ -15,7 +15,6 @@ const refs = {
   btnLoad: document.querySelector('.load-more'),
 };
 
-let fetchCounter = 1;
 let saveInput = '';
 
 const API_KEY = '35683515-755808cb63fe444becf5469f8';
@@ -30,13 +29,16 @@ const scroll = new OnlyScroll(document.scrollingElement);
 
 let infScroll = new InfiniteScroll(refs.galleryBox, {
   path: function () {
-    fetchCounter += 1;
-    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${fetchCounter}`;
+    if (this.loadCount === 0) this.loadCount = 1;
+    if (this.pageIndex === 1) this.pageIndex = 2;
+    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${this.pageIndex}`;
   },
   responseBody: 'json',
   status: '.scroll-status',
   history: false,
 });
+
+infScroll.scroller.history['length'] = 14;
 
 // Funtions
 
@@ -50,7 +52,7 @@ const onSubmitRenderGalleryHandler = async evt => {
   if (!input || saveInput === input) return;
   checkResultInput(input);
   try {
-    const response = await search(API_KEY, saveInput, fetchCounter);
+    const response = await search(API_KEY, saveInput, infScroll.pageIndex);
     const result = await checkOnInputResponse(response);
     return renderMarkup(result);
   } catch {
@@ -61,6 +63,7 @@ const onSubmitRenderGalleryHandler = async evt => {
 // Render Foo
 
 const renderMarkup = response => {
+  if (!response.hits.length) return onRejectScroll();
   const markup = response.hits
     .map(
       ({
@@ -108,16 +111,20 @@ const renderMarkup = response => {
 const checkResultInput = evt => {
   if (saveInput !== evt) {
     saveInput = evt;
-    fetchCounter = 1;
+    infScroll.loadCount = 0;
+    infScroll.pageIndex = 1;
     refs.galleryBox.innerHTML = '';
   }
 };
 
 const checkOnInputResponse = response => {
   if (!response.totalHits) return;
-  if (fetchCounter === 1) {
+  if (infScroll.pageIndex === 1) {
     Notiflix.Notify.success(`Hooray! We found ${response.totalHits} images.`);
   }
+  infScroll.create();
+  infScroll.on('load', renderMarkup);
+  infScroll.on('error', onRejectScroll);
   return response;
 };
 
@@ -130,6 +137,7 @@ const onRejectBtnSearch = () => {
 };
 
 const onRejectScroll = () => {
+  infScroll.destroy();
   return Notiflix.Notify.info(
     `We're sorry, but you've reached the end of search results.`
   );
@@ -151,6 +159,3 @@ const fixJumpContainer = evt => {
 
 refs.searchImgForm.addEventListener('submit', onSubmitRenderGalleryHandler);
 window.addEventListener('click', fixJumpContainer);
-
-infScroll.on('load', renderMarkup);
-infScroll.on('error', onRejectScroll);
