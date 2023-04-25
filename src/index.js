@@ -38,8 +38,6 @@ let infScroll = new InfiniteScroll(refs.galleryBox, {
   history: false,
 });
 
-infScroll.scroller.history['length'] = 14;
-
 // Funtions
 
 // Events Foo
