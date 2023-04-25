@@ -138,7 +138,7 @@ const onRejectBtnSearch = () => {
 
 const onRejectScroll = () => {
   infScroll.destroy();
-  return Notiflix.Notify.info(
+  return Notiflix.Notify.warning(
     `We're sorry, but you've reached the end of search results.`
   );
 };
