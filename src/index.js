@@ -15,6 +15,7 @@ const refs = {
   btnLoad: document.querySelector('.load-more'),
 };
 
+const per_page = 40;
 let saveInput = '';
 
 const API_KEY = '35683515-755808cb63fe444becf5469f8';
@@ -31,7 +32,7 @@ let infScroll = new InfiniteScroll(refs.galleryBox, {
   path: function () {
     if (this.loadCount === 0) this.loadCount = 1;
     if (this.pageIndex === 1) this.pageIndex = 2;
-    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${this.pageIndex}`;
+    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${per_page}&page=${this.pageIndex}`;
   },
   responseBody: 'json',
   status: '.scroll-status',
@@ -50,7 +51,12 @@ const onSubmitRenderGalleryHandler = async evt => {
   if (!input || saveInput === input) return;
   checkResultInput(input);
   try {
-    const response = await search(API_KEY, saveInput, infScroll.pageIndex);
+    const response = await search(
+      API_KEY,
+      saveInput,
+      per_page,
+      infScroll.pageIndex
+    );
     const result = await checkOnInputResponse(response);
     return renderMarkup(result);
   } catch {
@@ -62,6 +68,9 @@ const onSubmitRenderGalleryHandler = async evt => {
 
 const renderMarkup = response => {
   if (!response.hits.length) return onRejectScroll();
+  if (infScroll.pageIndex > Math.round(response.totalHits / per_page)) {
+    onRejectScroll();
+  }
   const markup = response.hits
     .map(
       ({
