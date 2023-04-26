@@ -22,7 +22,7 @@ const API_KEY = '35683515-755808cb63fe444becf5469f8';
 
 // Custom Libraries
 
-axios.defaults.baseURL = 'https://pixabay.com/api/';
+const url = 'https://pixabay.com/api/';
 
 let gallery = new SimpleLightbox('.gallery a');
 
@@ -34,7 +34,7 @@ let infScroll = new InfiniteScroll(refs.galleryBox, {
       this.loadCount = 1;
       this.pageIndex = 2;
     }
-    return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${per_page}&page=${this.pageIndex}`;
+    return `${url}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${per_page}&page=${this.pageIndex}`;
   },
   responseBody: 'json',
   status: '.scroll-status',
@@ -47,7 +47,6 @@ let infScroll = new InfiniteScroll(refs.galleryBox, {
 
 const onSubmitRenderGalleryHandler = async evt => {
   evt.preventDefault();
-  console.log(infScroll);
   const input = evt.currentTarget.elements.searchQuery.value
     .toLowerCase()
     .trim();
@@ -55,12 +54,13 @@ const onSubmitRenderGalleryHandler = async evt => {
   checkResultInput(input);
   try {
     const response = await search(
+      url,
       API_KEY,
       saveInput,
       per_page,
       infScroll.pageIndex
     );
-    const result = await checkOnInputResponse(response);
+    const result = checkOnInputResponse(response);
     return renderMarkup(result);
   } catch {
     onRejectBtnSearch();
