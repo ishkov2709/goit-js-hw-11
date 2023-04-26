@@ -30,7 +30,9 @@ img {
 
 .info {
     display: flex;
+    justify-content: center;
     text-align: center;
+    gap: 10px;
     padding: 20px 0;
 }
 
@@ -40,5 +42,9 @@ img {
 
 .info-item b {
     margin-bottom: 8px;
+}
+
+.count {
+    display: block;
 }
 

@@ -30,8 +30,10 @@ const scroll = new OnlyScroll(document.scrollingElement);
 
 let infScroll = new InfiniteScroll(refs.galleryBox, {
   path: function () {
-    if (this.loadCount === 0) this.loadCount = 1;
-    if (this.pageIndex === 1) this.pageIndex = 2;
+    if (this.loadCount === 0 && this.pageIndex === 1) {
+      this.loadCount = 1;
+      this.pageIndex = 2;
+    }
     return `${axios.defaults.baseURL}?key=${API_KEY}&q=${saveInput}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${per_page}&page=${this.pageIndex}`;
   },
   responseBody: 'json',
@@ -45,6 +47,7 @@ let infScroll = new InfiniteScroll(refs.galleryBox, {
 
 const onSubmitRenderGalleryHandler = async evt => {
   evt.preventDefault();
+  console.log(infScroll);
   const input = evt.currentTarget.elements.searchQuery.value
     .toLowerCase()
     .trim();
@@ -67,7 +70,7 @@ const onSubmitRenderGalleryHandler = async evt => {
 // Render Foo
 
 const renderMarkup = response => {
-  if (!response.hits.length) return onRejectScroll();
+  if (!response.hits.length) return;
   if (infScroll.pageIndex > Math.round(response.totalHits / per_page)) {
     onRejectScroll();
   }
@@ -89,19 +92,19 @@ const renderMarkup = response => {
             <div class="info">
                 <p class="info-item">
                     <b>Likes</b>
-                    ${likes}
+                    <span class="count">${likes}</span>
                 </p>
                 <p class="info-item">
                     <b>Views</b>
-                    ${views}
+                    <span class="count">${views}</span>
                 </p>
                 <p class="info-item">
                     <b>Comments</b>
-                    ${comments}
+                    <span class="count">${comments}</span>
                 </p>
                 <p class="info-item">
                     <b>Downloads</b>
-                    ${downloads}
+                    <span class="count">${downloads}</span>
                 </p>
             </div>
         </article>
@@ -111,6 +114,8 @@ const renderMarkup = response => {
 
   refs.galleryBox.insertAdjacentHTML('beforeend', markup);
   gallery.refresh();
+  infScroll.once('load', renderMarkup);
+  infScroll.once('error', onRejectScroll);
 };
 
 // Check Foo
@@ -130,15 +135,13 @@ const checkOnInputResponse = response => {
     Notiflix.Notify.success(`Hooray! We found ${response.totalHits} images.`);
   }
   infScroll.create();
-  infScroll.on('load', renderMarkup);
-  infScroll.on('error', onRejectScroll);
   return response;
 };
 
 // Utils Foo
 
 const onRejectBtnSearch = () => {
-  Notiflix.Notify.failure(
+  return Notiflix.Notify.failure(
     'Sorry, there are no images matching your search query. Please try again.'
   );
 };
